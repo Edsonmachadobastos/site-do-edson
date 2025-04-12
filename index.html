@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>site do EDSON </title>
+  <script src="https://cdn.jsdelivr.net/npm/compressorjs@1.1.1/dist/compressor.min.js"></script>
+  <style>
+    :root {
+      --bg: #1e1e2f;
+      --card: #2b2b3c;
+      --text: #f8f8f8;
+      --accent: #00c9a7;
+      --btn-hover: #00b39a;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 40px 20px;
+      font-family: 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 30px;
+      background: linear-gradient(to right, #00c9a7, #007cf0);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    section {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 30px;
+      max-width: 600px;
+      width: 100%;
+      box-shadow: 0 10px 25px rgba(25, 117, 133, 0.973);
+    }
+
+    input[type="file"] {
+      width: 100%;
+      margin-bottom: 20px;
+      background: #2b271c;
+      color: var(--text);
+      padding: 10px;
+      border: 1px solid #444;
+      border-radius: 10px;
+    }
+
+    button {
+      width: 100%;
+      background: var(--accent);
+      border: none;
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: bold;
+      color: #fff;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background: var(--btn-hover);
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 16px;
+      background-color: #444;
+      border-radius: 10px;
+      margin-top: 20px;
+      overflow: hidden;
+      display: none;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background-color: var(--accent);
+      transition: width 0.4s ease;
+    }
+
+    .download-btn {
+      display: inline-block;
+      margin-top: 20px;
+      background: var(--accent);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: bold;
+      transition: background 0.3s;
+    }
+
+    .download-btn:hover {
+      background: var(--btn-hover);
+    }
+
+    .link-box {
+      margin-top: 15px;
+      background: #1c1c2b;
+      padding: 10px;
+      border-radius: 8px;
+      font-family: monospace;
+      word-break: break-all;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .link-box button {
+      background: #555;
+      font-size: 14px;
+      padding: 6px 12px;
+      margin-left: 10px;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .link-box button:hover {
+      background: #777;
+    }
+
+    img {
+      margin-top: 20px;
+      max-width: 100%;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    }
+
+  </style>
+</head>
+<body>
+
+  <h1>🎨 SITE PARA AJUDAR </h1>
+
+  <section>
+    <h2>📷 Converter para png</h2>
+    <input type="file" id="imageInput" accept="image/*">
+    <button onclick="processImage()">Converter / Comprimir</button>
+    <div class="progress-bar" id="imageProgress">
+      <div class="progress-bar-fill" id="imageBar"></div>
+    </div>
+    <div id="imageResult"></div>
+  </section>
+  <script>
+    async function convertToPDF() {
+      const fileInput = document.getElementById('pdfInput');
+      const file = fileInput.files[0];
+      if (!file) return alert("Selecione um arquivo!");
+  
+      const pdfViewer = document.getElementById("pdfViewer");
+      pdfViewer.innerHTML = "";
+  
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF();
+  
+      if (file.type.startsWith("image/")) {
+        const reader = new FileReader();
+        reader.onload = function () {
+          const img = new Image();
+          img.onload = function () {
+            const imgProps = pdf.getImageProperties(img);
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+            pdf.addImage(img, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+            showPDF(pdf);
+          };
+          img.src = reader.result;
+        };
+        reader.readAsDataURL(file);
+      } else if (file.type === "text/plain" || file.type === "text/html") {
+        const text = await file.text();
+        const lines = text.split("\n");
+        let y = 10;
+        lines.forEach(line => {
+          pdf.text(line, 10, y);
+          y += 10;
+        });
+        showPDF(pdf);
+      } else {
+        alert("Tipo de arquivo não suportado.");
+      }
+    }
+  
+    function showPDF(pdfDoc) {
+      const pdfViewer = document.getElementById("pdfViewer");
+      const blob = pdfDoc.output("blob");
+      const url = URL.createObjectURL(blob);
+  
+      // Visualizador embutido
+      const iframe = document.createElement("iframe");
+      iframe.src = url;
+      iframe.width = "100%";
+      iframe.height = "500px";
+      iframe.style.border = "1px solid #444";
+      iframe.style.borderRadius = "10px";
+  
+      // Botão de download
+      const downloadBtn = document.createElement("a");
+      downloadBtn.href = url;
+      downloadBtn.download = "arquivo.pdf";
+      downloadBtn.innerText = "⬇️ Baixar PDF";
+      downloadBtn.className = "download-btn";
+      downloadBtn.style.display = "inline-block";
+      downloadBtn.style.marginTop = "15px";
+  
+      pdfViewer.appendChild(iframe);
+      pdfViewer.appendChild(downloadBtn);
+    }
+  </script>
+  
+  <section style="margin-top: 50px;">
+    <h2>📄 Converter para PDF</h2>
+    <input type="file" id="pdfInput" accept=".txt,.png,.jpg,.jpeg,.html">
+    <button onclick="convertToPDF()">Converter para PDF</button>
+    <div id="pdfViewer" style="margin-top: 20px;"></div>
+  </section>
+  
+  <section style="margin-top: 50px;">
+    <h2>📖 Leitor de PDF</h2>
+    <input type="file" id="pdfReaderInput" accept="application/pdf">
+    <button onclick="lerPDF()">Ler PDF</button>
+    <div id="visualizadorPDF" style="margin-top: 20px;"></div>
+  </section>
+  
+  <section style="margin-top: 50px;">
+    <h2>🔗 Gerador de Link para Arquivos</h2>
+    <input type="file" id="fileLinkInput">
+    <button onclick="gerarLink()">Gerar Link</button>
+  
+    <div id="fileLinkResult" style="margin-top: 20px;"></div>
+  </section>
+  
+  <!DOCTYPE html>
+  <html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8">
+    <title>Pasta de Emojis</title>
+    <style>
+      body {
+        background: linear-gradient(to right, #392d69, #242acf);
+        background-color: #121212;
+        color: white;
+        font-family: Arial, sans-serif;
+        text-align: center;
+        padding: 40px;
+      }
+  
+      .toggle-button, .add-button {
+        width: 600px;
+        padding: 12px 2px;
+        margin: 5px;
+        background-color: #00c9a7;
+        border: none;
+        border-radius: 12px;
+        color: white;
+        font-size: 16px;
+        cursor: pointer;
+      }
+  
+      .toggle-button:hover, .add-button:hover {
+        background-color: #00c9a7;
+      }
+  
+      .emoji-container {
+        display: none;
+        margin-top: 20px;
+        background-color: #1e1e2e;
+        border-radius: 10px;
+        padding: 20px;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+  
+      .emoji-board {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        justify-content: center;
+        margin-top: 20px;
+      }
+  
+      .emoji {
+        font-size: 24px;
+        padding: 8px;
+        background-color: #383854;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: 0.2s;
+      }
+  
+      .emoji:hover {
+        background-color: #50507a;
+        transform: scale(1.2);
+      }
+    </style>
+  </head>
+  <body>
+  
+    <button class="toggle-button" onclick="toggleEmoji()">📂 Abrir Emojis</button>
+    <button class="add-button" onclick="addEmoji()">➕ Adicionar Emoji</button>
+  
+    <div class="emoji-container" id="emojiContainer">
+      <div class="emoji-board" id="emojiBoard"></div>
+    </div>
+  
+    <script>
+      const emojiContainer = document.getElementById("emojiContainer");
+      const emojiBoard = document.getElementById("emojiBoard");
+      const emojis = ["😀", "😂", "😍", "🥰", "😎", "🤔", "🥳", "😡", "😭", "❤️"];
+  
+      function toggleEmoji() {
+        if (emojiContainer.style.display === "none" || emojiContainer.style.display === "") {
+          emojiContainer.style.display = "block";
+          document.querySelector(".toggle-button").textContent = "❌ Fechar Emojis";
+        } else {
+          emojiContainer.style.display = "none";
+          document.querySelector(".toggle-button").textContent = "📂 Abrir Emojis";
+        }
+      }
+  
+      function renderEmojis() {
+        emojiBoard.innerHTML = "";
+        emojis.forEach(emoji => {
+          const span = document.createElement("span");
+          span.className = "emoji";
+          span.textContent = emoji;
+          span.onclick = () => {
+            navigator.clipboard.writeText(emoji);
+            alert(`✅ Emoji ${emoji} copiado!`);
+          };
+          emojiBoard.appendChild(span);
+        });
+      }
+  
+      function addEmoji() {
+        const newEmoji = prompt("Digite o emoji que deseja adicionar:");
+        if (newEmoji && newEmoji.trim() !== "") {
+          emojis.push(newEmoji.trim());
+          renderEmojis();
+        }
+      }
+  
+      renderEmojis(); // inicializa os emojis ao carregar
+    </script>
+  
+  </body>
+  </html>
+  
+<p><!-- Estilo moderno para o WhatsApp Generator -->
+    <style>
+      .whatsapp-box {
+        max-width: 500px;
+        margin: 40px auto;
+        background: #1e1e2f;
+        padding: 25px;
+        border-radius: 14px;
+        color: #fff;
+        box-shadow: 0 0 15px #00000040;
+        font-family: 'Segoe UI', sans-serif;
+      }
+    
+      .whatsapp-box h2 {
+        margin-bottom: 20px;
+        font-size: 24px;
+        color: #00c9a7;
+      }
+    
+      .whatsapp-box input,
+      .whatsapp-box textarea {
+        width: 100%;
+        padding: 12px;
+        margin-top: 10px;
+        margin-bottom: 15px;
+        border: none;
+        border-radius: 8px;
+        font-size: 15px;
+        background: #2c2f40;
+        color: white;
+        outline: none;
+      }
+    
+      .whatsapp-box textarea::placeholder,
+      .whatsapp-box input::placeholder {
+        color: #aaa;
+      }
+    
+      .whatsapp-box button {
+        padding: 12px 18px;
+        margin-right: 10px;
+        border: none;
+        border-radius: 8px;
+        font-size: 15px;
+        cursor: pointer;
+        transition: 0.3s;
+      }
+    
+      .whatsapp-generate {
+        background-color: #00c9a7;
+        color: white;
+      }
+    
+      .whatsapp-generate:hover {
+        background-color: #00c9a7;
+      }
+    
+      .whatsapp-copy {
+        background-color: #3a3f5a;
+        color: white;
+      }
+    
+      .whatsapp-copy:hover {
+        background-color: #50567a;
+      }
+    
+      #whatsLinkResult {
+        margin-top: 18px;
+        word-break: break-all;
+        font-size: 14px;
+      }
+    
+      #whatsLinkResult a {
+        color: #00c9a7;
+        text-decoration: none;
+      }
+    </style>
+    
+    <!-- Estrutura do Gerador -->
+    <div class="whatsapp-box">
+      <h2>💬 Gerador de Mensagem para WhatsApp</h2>
+    
+      <input type="text" id="whatsNumber" placeholder="Número com DDI (ex: 5599999999999)">
+      <textarea id="whatsMessage" rows="4" placeholder="Digite sua mensagem aqui..."></textarea>
+    
+      <button class="whatsapp-generate" onclick="generateWhatsAppLink()">🔗 Gerar Link</button>
+      <button class="whatsapp-copy" onclick="copyWhatsAppLink()">📋 Copiar Link</button>
+    
+      <div id="whatsLinkResult"></div>
+    </div>
+    
+    <!-- JavaScript funcional -->
+    <script>
+      function generateWhatsAppLink() {
+        const number = document.getElementById("whatsNumber").value.trim();
+        const message = document.getElementById("whatsMessage").value.trim();
+        if (!number || !message) {
+          alert("⚠️ Preencha o número e a mensagem.");
+          return;
+        }
+        const link = `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
+        document.getElementById("whatsLinkResult").innerHTML = `
+          <p>✅ <a href="${link}" target="_blank">Clique aqui para abrir no WhatsApp</a></p>
+          <small>${link}</small>
+        `;
+      }
+    
+      function copyWhatsAppLink() {
+        const number = document.getElementById("whatsNumber").value.trim();
+        const message = document.getElementById("whatsMessage").value.trim();
+        if (!number || !message) {
+          alert("⚠️ Preencha o número e a mensagem.");
+          return;
+        }
+        const link = `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
+        navigator.clipboard.writeText(link).then(() => {
+          alert("✅ Link copiado com sucesso!");
+        });
+      }
+    </script>
+    </p>
+  
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+    <head>
+      <meta charset="UTF-8">
+      <title>Menu com Botão Redondo</title>
+      <style>
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
+    
+        body {
+          font-family: 'Segoe UI', sans-serif;
+          color: #fff;
+          height: 100vh;
+          overflow-x: hidden;
+        }
+    
+        /* Botão redondo fixo no canto */
+        .menu-toggle {
+          position: fixed;
+          top: 20px;
+          left: 22px;
+          width: 60px;
+          height: 60px;
+          border-radius: 50%;
+          background-color: #00d2ff;
+          color: #000;
+          border: none;
+          font-size: 24px;
+          font-weight: bold;
+          cursor: pointer;
+          z-index: 1001;
+          box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+          transition: background 0.3s;
+        }
+    
+        .menu-toggle:hover {
+          background-color: #00a6cc;
+        }
+    
+        /* Menu lateral */
+        .menu {
+          position: fixed;
+          top: 0;
+          left: -240px;
+          width: 220px;
+          height: 100%;
+
+          padding: 25px 15px;
+          transition: left 0.4s ease;
+          box-shadow: 2px 0 10px rgba(0,0,0,0.4);
+          z-index: 1000;
+        }
+    
+        .menu.open {
+          left: 0;
+        }
+    
+        .menu h2 {
+          color: #0ff;
+          font-size: 20px;
+          text-align: center;
+          margin-bottom: 25px;
+        }
+    
+        .menu a {
+          display: block;
+          text-decoration: none;
+          background: #00d2ff;
+          color: #000;
+          padding: 10px;
+          margin: 8px 0;
+          border-radius: 6px;
+          font-size: 16px;
+          text-align: center;
+          transition: background 0.3s;
+        }
+    
+        .menu a:hover {
+          background-color: #00b39a;
+        }
+    
+        /* Conteúdo principal */
+        .content {
+          padding: 60px 30px;
+          transition: margin-left 0.4s ease;
+          margin-left: 0;
+        }
+    
+        .menu.open ~ .content {
+          margin-left: 220px;
+        }
+    
+        h1 {
+          font-size: 32px;
+          margin-bottom: 20px;
+        }
+    
+        p {
+          font-size: 18px;
+        }
+      </style>
+    </head>
+    <body>
+    
+      <!-- Botão redondo do menu -->
+      <button class="menu-toggle" onclick="toggleMenu()">☰</button>
+    
+      <!-- Menu lateral -->
+      <div class="menu" id="menu">
+        <h1>🈵 <P>MENU VIBE</P></h2>
+          <a href="#" onclick="voltarInicio()">🏠 Início</a>
+          <li style="list-style: none;">
+            <a href="senha de aseso pagina 2.html" style="
+              display: block;
+              padding: 12px 20px;
+              background-color: #7108d3;
+              color: white;
+              border-radius: 8px;
+              font-weight: bold;
+              text-decoration: none;
+            ">
+              💎  Menbros
+            </a>
+          </li>
+        <a href="https://br.pinterest.com/" target="_blank">🔗 PINTEREST</a>
+        <a href="https://drive.google.com/drive/folders/18B0Wd9f_A3rDoGCT_UYvp21Cuw1RUoaA" target="_blank">📂 PROGAMAS ADOBE  </a> 
+        <a href="editor.html" target="_blank">🎬 Editor de Vídeo</a>
+
+      </div>
+      <script>
+        const menu = document.getElementById('menu');
+        const conteudo = document.getElementById('conteudo');
+    
+        function toggleMenu() {
+          menu.classList.toggle('open');
+        }
+    
+        function voltarInicio() {
+          conteudo.innerHTML = `
+            <h1>Bem-vindo!</h1>
+            <p>Use o botão redondo no canto para abrir o menu lateral.</p>
+          `;
+          menu.classList.remove('open');
+        }
+      </script>
+    
+    </body>
+    </html>
+    
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+    <head>
+      <meta charset="UTF-8">
+      <title>Calculadora com Som</title>
+      <style>
+        body {
+          margin: 0;
+          font-family: 'Segoe UI', sans-serif;
+          height: 100vh;
+        }
+    
+        .calc-btn {
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          width: 60px;
+          height: 60px;
+          background: radial-gradient(circle at 30% 30%, #00c6ff, #0072ff);
+          border-radius: 50%;
+          border: none;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+          cursor: pointer;
+          z-index: 1000;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 26px;
+          color: white;
+          transition: 0.3s;
+        }
+    
+        .calc-btn:hover {
+          transform: scale(1.1);
+          box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
+        }
+    
+        .calculator-container {
+          position: fixed;
+          top: 90px;
+          right: 20px;
+          width: 340px;
+          background: #1e1e2f;
+          border-radius: 20px;
+          box-shadow: 0 0 25px rgba(0, 0, 0, 0.6);
+          padding: 20px;
+          display: none;
+          z-index: 999;
+          color: white;
+        }
+    
+        .close-btn {
+          background: #e74c3c;
+          border: none;
+          padding: 6px 12px;
+          border-radius: 8px;
+          cursor: pointer;
+          float: right;
+          color: white;
+          margin-bottom: 15px;
+        }
+    
+        .display {
+          background: #111;
+          padding: 15px;
+          font-size: 36px;
+          text-align: right;
+          border-radius: 10px;
+          margin-bottom: 20px;
+          color: #00ffe1;
+        }
+    
+        .buttons {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 12px;
+        }
+    
+        .buttons button {
+          padding: 20px;
+          font-size: 20px;
+          background: #2c2f4a;
+          color: white;
+          border: none;
+          border-radius: 12px;
+          cursor: pointer;
+          transition: 0.2s;
+        }
+    
+        .buttons button:hover {
+          background: #00c6ff;
+          color: black;
+        }
+    
+        .equal {
+          background: #00c6ff;
+          color: black;
+          grid-column: span 2;
+        }
+    
+        .clear {
+          background: #e74c3c;
+        }
+      </style>
+    </head>
+    <body>
+    
+      <!-- Som do clique -->
+      <audio id="click-sound" src="https://www.soundjay.com/buttons/sounds/button-30.mp3" preload="auto"></audio>
+    
+      <!-- Botão da calculadora -->
+      <button class="calc-btn" onclick="abrirCalculadora(); playClick()">🧮</button>
+    
+      <!-- Calculadora -->
+      <div class="calculator-container" id="calcContainer">
+        <button class="close-btn" onclick="fecharCalculadora(); playClick()">Fechar</button>
+        <div id="display" class="display">0</div>
+        <div class="buttons">
+          <button onclick="clearDisplay(); playClick()" class="clear">C</button>
+          <button onclick="addChar('%'); playClick()">%</button>
+          <button onclick="addChar('/'); playClick()">/</button>
+          <button onclick="addChar('*'); playClick()">×</button>
+    
+          <button onclick="addChar('7'); playClick()">7</button>
+          <button onclick="addChar('8'); playClick()">8</button>
+          <button onclick="addChar('9'); playClick()">9</button>
+          <button onclick="addChar('-'); playClick()">−</button>
+    
+          <button onclick="addChar('4'); playClick()">4</button>
+          <button onclick="addChar('5'); playClick()">5</button>
+          <button onclick="addChar('6'); playClick()">6</button>
+          <button onclick="addChar('+'); playClick()">+</button>
+    
+          <button onclick="addChar('1'); playClick()">1</button>
+          <button onclick="addChar('2'); playClick()">2</button>
+          <button onclick="addChar('3'); playClick()">3</button>
+          <button onclick="calculate(); playClick()" class="equal">=</button>
+    
+          <button onclick="addChar('0'); playClick()">0</button>
+          <button onclick="addChar('.'); playClick()">.</button>
+        </div>
+      </div>
+    
+      <script>
+        const display = document.getElementById('display');
+        const calcContainer = document.getElementById('calcContainer');
+        const clickSound = document.getElementById('click-sound');
+    
+        function playClick() {
+          clickSound.currentTime = 0;
+          clickSound.play();
+        }
+    
+        function abrirCalculadora() {
+          calcContainer.style.display = 'block';
+        }
+    
+        function fecharCalculadora() {
+          calcContainer.style.display = 'none';
+        }
+    
+        function addChar(char) {
+          if (display.innerText === '0') display.innerText = '';
+          display.innerText += char;
+        }
+    
+        function clearDisplay() {
+          display.innerText = '0';
+        }
+    
+        function calculate() {
+          try {
+            display.innerText = eval(display.innerText.replace('×', '*').replace('−', '-'));
+          } catch {
+            display.innerText = 'Erro';
+          }
+        }
+    
+        document.addEventListener('keydown', function(e) {
+          const key = e.key;
+          const validKeys = '0123456789+-*/%.';
+          if (validKeys.includes(key)) {
+            addChar(key);
+            playClick();
+          } else if (key === 'Enter') {
+            calculate();
+            playClick();
+          } else if (key === 'Backspace') {
+            display.innerText = display.innerText.slice(0, -1) || '0';
+            playClick();
+          } else if (key === 'Escape') {
+            clearDisplay();
+            playClick();
+          }
+        });
+      </script>
+    </body>
+    </html>
+    
+  
+
+  
+    
+
+  <script>
+    function processImage() {
+      const input = document.getElementById('imageInput');
+      const file = input.files[0];
+      if (!file) return;
+
+      const bar = document.getElementById('imageProgress');
+      const fill = document.getElementById('imageBar');
+      const result = document.getElementById('imageResult');
+      result.innerHTML = '';
+      fill.style.width = '0%';
+      bar.style.display = 'block';
+
+      const isPNG = file.type === "image/png";
+
+      if (isPNG) {
+        new Compressor(file, {
+          quality: 0.6,
+          success(resultFile) {
+            const url = URL.createObjectURL(resultFile);
+            fill.style.width = '100%';
+            showImageResult(url, "imagem_comprimida.png");
+          },
+          error(err) {
+            alert("Erro ao comprimir imagem: " + err.message);
+          },
+        });
+      } else {
+        const reader = new FileReader();
+        reader.onload = function () {
+          const img = new Image();
+          img.onload = function () {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            canvas.toBlob(function(blob) {
+              const url = URL.createObjectURL(blob);
+              fill.style.width = '100%';
+              showImageResult(url, "imagem_convertida.png");
+            }, 'image/png');
+          };
+          img.src = reader.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function showImageResult(url, filename) {
+      const result = document.getElementById('imageResult');
+      result.innerHTML = `
+        <img src="${url}" alt="Imagem Final">
+        <br><a class="download-btn" href="${url}" download="${filename}">⬇️ Baixar Imagem</a>
+        <div class="link-box">
+          <span id="imageLink">${url}</span>
+          <button onclick="copyLink()">Copiar Link</button>
+        </div>
+      `;
+    }
+
+    function copyLink() {
+      const link = document.getElementById('imageLink').innerText;
+      navigator.clipboard.writeText(link).then(() => {
+        alert("✅ Link copiado!");
+      });
+    }
+  </script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script><script>
+  function lerPDF() {
+    const input = document.getElementById("pdfReaderInput");
+    const file = input.files[0];
+    if (!file) return alert("Selecione um arquivo PDF!");
+
+    const url = URL.createObjectURL(file);
+    const visualizador = document.getElementById("visualizadorPDF");
+
+    visualizador.innerHTML = `
+      <iframe 
+        src="${url}" 
+        width="100%" 
+        height="600px" 
+        style="border: 1px solid #444; border-radius: 10px;">
+      </iframe>
+    `;
+  }
+</script><script>
+    function gerarLink() {
+      const input = document.getElementById("fileLinkInput");
+      const file = input.files[0];
+      const result = document.getElementById("fileLinkResult");
+  
+      if (!file) {
+        alert("Selecione um arquivo!");
+        return;
+      }
+  
+      const url = URL.createObjectURL(file);
+  
+      result.innerHTML = `
+        <p><strong>Link gerado:</strong></p>
+        <div class="link-box">
+          <span id="fileGeneratedLink">${url}</span>
+          <button onclick="copiarLinkGerado()">Copiar</button>
+        </div>
+        <a href="${url}" download="${file.name}" class="download-btn">⬇️ Baixar Arquivo</a>
+      `;
+    }
+  
+    function copiarLinkGerado() {
+      const link = document.getElementById("fileGeneratedLink").innerText;
+      navigator.clipboard.writeText(link).then(() => {
+        alert("✅ Link copiado para a área de transferência!");
+      });
+    }
+  </script>
+  
+
+
+
+</body>
+</html>
